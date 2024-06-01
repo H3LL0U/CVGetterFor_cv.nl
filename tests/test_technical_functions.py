@@ -4,6 +4,7 @@ from src.technical_functions import getScreenshotFromURL
 from src.technical_functions import createCVImageFromURL
 import unittest.mock as mock
 from PIL import Image
+import PIL.PngImagePlugin
 import os
 import io
 
@@ -18,13 +19,16 @@ def test_getScreenshotFromURL(initial_location, initial_size):
     with mock.patch('selenium.webdriver.Chrome') as MockWebDriver:
         mock_driver = MockWebDriver.return_value
         mock_driver.find_element.return_value = mock_element
-        mock_driver.get_screenshot_as_png.return_value = b'\x89PNG\r\n\x1a\n\x00\x00\x00\rIHDR\x00\x00\x00\x10\x00\x00\x00\x10\x08\x06\x00\x00\x00\x1f\xf3\xff\xa6\x00\x00\x00\x19tEXtSoftware\x00Adobe ImageReadyq\xc9e<\x00\x00\x00\x18IDATx\xdab\xfc\xff\xff?\x03\x05\x00\x00\x0b\x00\x01p\xfc*\n\x00\x00\x00\x00IEND\xaeB`\x82'
+        with io.BytesIO() as output:
+            Image.new("RGBA", size = tuple(initial_size.values()), color=(256,0,0)).save(output, format="PNG")
+            mock_screenshot =  output.getvalue()
+        mock_driver.get_screenshot_as_png.return_value = mock_screenshot
         
         
-        screenshot, location, size = getScreenshotFromURL("http://example.com")
+        screenshot, location, size = getScreenshotFromURL("https://www.cv.nl/d/view")
         
         
-        assert type(screenshot) == bytes 
+        assert type(screenshot) is PIL.PngImagePlugin.PngImageFile
         assert location == initial_location
         assert size == initial_size
 
@@ -32,18 +36,19 @@ def test_getScreenshotFromURL(initial_location, initial_size):
 def test_createCVImageFromURL(whole_width,  whole_height,  width, height, x, y, tmp_path):
     # Mock the return values of getScreenshotFromURL
     mock_screenshot = Image.new('RGBA', size=(whole_width,whole_height), color=(256,0,0))
-    with io.BytesIO() as output:
-        mock_screenshot.save(output, format="PNG")
-        mock_screenshot =  output.getvalue()
+    #with io.BytesIO() as output:
+        #mock_screenshot.save(output, format="PNG")
+        #mock_screenshot =  output.getvalue()
     mock_location = {"x": x, "y": y}
     mock_size = {"width": width, "height": height}
     
     with mock.patch('src.technical_functions.getScreenshotFromURL', return_value=(mock_screenshot, mock_location, mock_size)):
         # Call the function to test
-        createCVImageFromURL("http://example.com",   "test_output_image.png")
+        returned = createCVImageFromURL("https://www.cv.nl/d/view",  tmp_path / "test_output_image.png")
         
         # Verify the output image
-        output_image = Image.open(  "test_output_image.png")
+        output_image = Image.open(tmp_path / "test_output_image.png")
         assert output_image.size == (mock_size["width"], mock_size["height"])
+        assert returned
 
 
