@@ -9,47 +9,68 @@ from PIL import Image
 import io
 import time
 import PIL.PngImagePlugin
+import os
 
 
-def createCVImageFromURL(url, image_save_path= "output_image.png")-> bool | str:
+def createCVImagesFromURL(url, image_save_path= "output_image.png",max_pages = 30)-> list[str] | str:
     '''
-    return: True 
-    if it succeeded in creating an image
+    return: list[str] #with paths
+    if it succeeded in creating images
 
     return: message:str
     if it did not succeed 
     '''
 
     try:
-        screenshot, ellement_location , ellement_size = getScreenshotFromURL(url)
-        if not getScreenshotFromURL:
+        screenshots, ellement_locations , ellement_sizes = getScreenshotsFromURL(url)
+        all_images_paths = []
+        if screenshots is None:
             return "A link you provided doesn't seem to be right"
+        for screenshot, ellement_location , ellement_size in zip(screenshots, ellement_locations, ellement_sizes):
 
-        crop_box = (ellement_location["x"],
-                ellement_location["y"],
-                ellement_location["x"] + ellement_size["width"],
-                ellement_location["y"] + ellement_size["height"])
-    
-    
-        image = screenshot.crop(crop_box)
-        image.save(image_save_path)
+
+            crop_box = (ellement_location["x"],
+                    ellement_location["y"],
+                    ellement_location["x"] + ellement_size["width"],
+                    ellement_location["y"] + ellement_size["height"])
+        
+        
+            image = screenshot.crop(crop_box)
+            tmp_counter = 0
+            tmp_image_save_path = image_save_path
+            while tmp_counter<max_pages:
+
+                if not os.path.exists(tmp_image_save_path):
+                    all_images_paths.append(tmp_image_save_path)
+                    image.save(tmp_image_save_path)
+                    break
+                else:
+                    if not tmp_counter:
+                        base_image_path ,extension = os.path.splitext(tmp_image_save_path)
+
+                    #image_save_path, extension = os.path.splitext(image_save_path)
+                    tmp_counter+=1
+                    tmp_image_save_path = f"{base_image_path}{tmp_counter}{extension}"
+                    
+            
     except KeyboardInterrupt:
         quit()
-    except Exception:
+    except Exception as e:
+        
         return "An error accured when trying to save the image"
-    return True
-def getScreenshotFromURL(url:str) -> list[PIL.PngImagePlugin.PngImageFile,int,int] | None:
+    return all_images_paths
+def getScreenshotsFromURL(url:str) -> list[list[PIL.PngImagePlugin.PngImageFile,int,int]] | None:
     '''
     returns a screenshot in bytes, 
     the location of the canvas ellement
     the size of the canvas ellement
     '''
     if not controlTheLink(url):
-        return None
+        return (None,None,None)
     chrome_options = Options()
     chrome_options.add_argument("--headless")
     chrome_options.add_argument("--disable-gpu")
-    chrome_options.add_argument("--window-size=1920x2000")
+    chrome_options.add_argument("--window-size=3840x4000")
     driver = webdriver.Chrome( options=chrome_options)
 
     try:
@@ -57,22 +78,27 @@ def getScreenshotFromURL(url:str) -> list[PIL.PngImagePlugin.PngImageFile,int,in
     except KeyboardInterrupt:
         quit()
     except Exception as e:
-        return None
+        return (None,None,None)
         
-    CV_ellement = driver.find_element(By.TAG_NAME, 'canvas')
+    CV_ellements = driver.find_elements(By.TAG_NAME, 'canvas')
     
-    ellement_location = CV_ellement.location
-    ellement_size = CV_ellement.size
+    ellement_locations = []
+    ellement_sizes = []
+    screenshots = []
+    for ellement in CV_ellements:
+        ellement_locations.append(ellement.location)
+        ellement_sizes.append( ellement.size)
 
 
-    screenshot = driver.get_screenshot_as_png()
-    screenshot = Image.open(io.BytesIO(screenshot))
+        screenshots.append(Image.open(io.BytesIO(driver.get_screenshot_as_png())))
+
+    
     
     
     
     
 
-    return (screenshot , ellement_location, ellement_size)
+    return (screenshots , ellement_locations, ellement_sizes)
 
 def controlTheLink(link:str):
     if ("cv.nl/d/"in link ) and link.endswith("/view"):

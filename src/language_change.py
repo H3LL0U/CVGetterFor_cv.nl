@@ -8,7 +8,8 @@ change_language = {
         5:"Succesvol!",
         6:"Jouw CV was opgelsagen in ",
         7:"Een onverwachtte fout is ontstaan tijdens het opslaan van jouw CV",
-        8:"Jouw CV wordt opgeslagen... Een moment geduld"
+        8:"Jouw CV wordt opgeslagen... Een moment geduld",
+        9:"Een link die je ingedient hebt blijkt niet goed te zijn"
     },
     "English": {
         0:"Type the view link of your CV",
@@ -20,6 +21,7 @@ change_language = {
         6:"Your CV has been saved to ",
         7:"An error acured when trying to save your CV",
         8:"CV is being saved... Please wait",
+        9:"A link you provided doesn't seem to be right"
 
     },
     "Russian": {
@@ -31,7 +33,9 @@ change_language = {
         5:"Готово!",
         6:"Ваше резюме было сохраненно в ",
         7:"Произошла ощибка во время сохранения вашего резюме",
-        8:"Ваше резюме сохраняется... Пожалуйста подождите"
+        8:"Ваше резюме сохраняется... Пожалуйста подождите",
+        9:"Ссылка которую вы предоставили не является правильной"
+        
     }
 
 }

@@ -24,7 +24,8 @@ class LinkEntry(ctk.CTkFrame):
         self.select_path_to_save_to = SelectPathGrid(self,current_language=self.current_language)
         self.select_name = NameFileSelector(self,current_language=self.current_language)
         self.submit_button = ctk.CTkButton(self,text=language_change.getStringByID(2,selected_language = self.current_language) ,command=self.submit)
-        self.image_label = ctk.CTkLabel(self,image= None, text = "")
+        
+        self.image_label = ImageStorage(self)#ctk.CTkLabel(self,image= None, text = "")
         
         self.entry_label.pack()
         self.link_entry.pack(pady = 3)
@@ -37,16 +38,24 @@ class LinkEntry(ctk.CTkFrame):
     def submit_thread(self):
         
         path = self.select_path_to_save_to.get_written_path()
-        path_to_new_image = path+f"\\{self.select_name.getEntryVal(4,self.current_language)}"
+        path_to_new_image = path+f"\\{self.select_name.getEntryVal()}"
         url = self.link_contents.get()
-        output = technical_functions.createCVImageFromURL(url,path_to_new_image)
+        output = technical_functions.createCVImagesFromURL(url,path_to_new_image)
         if type(output) == str:
-            messagebox.showerror(language_change.getStringByID(7,self.current_language),output)
+            if output == "A link you provided doesn't seem to be right":
+                messagebox.showerror(language_change.getStringByID(4,self.current_language),language_change.getStringByID(9,self.current_language))
+            else:
+                messagebox.showerror(language_change.getStringByID(4,self.current_language),language_change.getStringByID(7,self.current_language))
         else:
             try:
-                open_image = Image.open(path_to_new_image)
-                created_image = CTkImage(open_image, size=tuple((i//4 for i in open_image.size)))
-                self.image_label.configure(image = created_image)
+                images = []
+                for path in output:
+                    open_image = Image.open(path)
+                    created_image = CTkImage(open_image, size=tuple((i//4 for i in open_image.size)))
+                    #self.image_label.configure(image = created_image)
+                    images.append(created_image)
+                self.image_label.updateImageStack(images)
+
             except Exception as e:
                 messagebox.showerror(language_change.getStringByID(4,selected_language=self.current_language),str(e))
             messagebox.showinfo(language_change.getStringByID(5,self.current_language),language_change.getStringByID(6,self.current_language)+path)
@@ -130,3 +139,26 @@ class CustomMenu():
     def updateLanguage(self,new_language):
         global current_language
         self.update_func(new_language)
+
+class ImageStorage(ctk.CTkFrame):
+    def __init__(self,master,*args, **kwargs):
+        super().__init__(master,*args,*kwargs)
+        self.current_image_index = 0
+        self.image_stack = []
+        self.button_left = ctk.CTkButton(self,width=50,height=50,command=lambda:self.pushStack(-1), text="<")
+        self.button_right = ctk.CTkButton(self,width=50,height=50, command=lambda:self.pushStack(1),text=">")
+        self.image = ctk.CTkLabel(self,image=None,text="")
+        
+        #self.button_left.pack(anchor="sw")
+        self.image.grid(column=1, row=0)
+        #self.button_right.pack(anchor="se")
+    def updateImageStack(self,new_images:list[CTkImage]):
+        if not self.button_left.winfo_ismapped():
+            self.button_left.grid(column = 0,row = 0)
+            self.button_right.grid(column =2,row= 0)
+        self.image_stack = new_images
+        self.image.configure(image=self.image_stack[0])
+
+    def pushStack(self,where:int):
+        self.current_image_index=(self.current_image_index+where)%len(self.image_stack)
+        self.image.configure(image = self.image_stack[self.current_image_index])
