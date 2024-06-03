@@ -8,20 +8,22 @@ from tkinter import filedialog
 import threading
 from PIL import Image
 from customtkinter import CTkImage
+from CTkMenuBar import *
 class LinkEntry(ctk.CTkFrame):
     
     def __init__(self, master, current_language, *args, **kwargs):
         super().__init__(master, *args, **kwargs)
         self.current_submit_thread = None
+        self.current_language = current_language
         custom_font =CTkFont(None,12)
-        self.entry_label = ctk.CTkLabel(self,text=language_change.getStringByID(0,selected_language=current_language), font=custom_font)
+        self.entry_label = ctk.CTkLabel(self,text=language_change.getStringByID(0,selected_language=self.current_language), font=custom_font)
         self.link_contents = ctk.StringVar()
         self.link_entry = ctk.CTkEntry(self,textvariable=self.link_contents, width=200,height=40, )
         
 
-        self.select_path_to_save_to = SelectPathGrid(self,current_language=current_language)
-        self.select_name = NameFileSelector(self,current_language=current_language)
-        self.submit_button = ctk.CTkButton(self,text=language_change.getStringByID(2,selected_language = current_language) ,command=self.submit)
+        self.select_path_to_save_to = SelectPathGrid(self,current_language=self.current_language)
+        self.select_name = NameFileSelector(self,current_language=self.current_language)
+        self.submit_button = ctk.CTkButton(self,text=language_change.getStringByID(2,selected_language = self.current_language) ,command=self.submit)
         self.image_label = ctk.CTkLabel(self,image= None, text = "")
         
         self.entry_label.pack()
@@ -35,19 +37,19 @@ class LinkEntry(ctk.CTkFrame):
     def submit_thread(self):
         
         path = self.select_path_to_save_to.get_written_path()
-        path_to_new_image = path+f"\\{self.select_name.getEntryVal()}"
+        path_to_new_image = path+f"\\{self.select_name.getEntryVal(4,self.current_language)}"
         url = self.link_contents.get()
         output = technical_functions.createCVImageFromURL(url,path_to_new_image)
         if type(output) == str:
-            messagebox.showerror("An error acured when trying to save your CV",output)
+            messagebox.showerror(language_change.getStringByID(7,self.current_language),output)
         else:
             try:
                 open_image = Image.open(path_to_new_image)
                 created_image = CTkImage(open_image, size=tuple((i//4 for i in open_image.size)))
                 self.image_label.configure(image = created_image)
             except Exception as e:
-                messagebox.showerror("An error acured",str(e))
-            messagebox.showinfo("Success!",f"Your image has been saved to {path}")
+                messagebox.showerror(language_change.getStringByID(4,selected_language=self.current_language),str(e))
+            messagebox.showinfo(language_change.getStringByID(5,self.current_language),language_change.getStringByID(6,self.current_language)+path)
     def submit(self):
         
         if self.current_submit_thread is None or not self.current_submit_thread.is_alive() and self.select_name.file_name_entry_var.get():
@@ -57,7 +59,7 @@ class LinkEntry(ctk.CTkFrame):
         elif not self.select_name.file_name_entry_var.get():
             messagebox.showinfo("No name entred","Please select a file name")
         else:
-            messagebox.showinfo("Work in progress","Image is being saved... Please wait")
+            messagebox.showinfo(language_change.getStringByID(4,self.current_language),language_change.getStringByID(8,self.current_language))
             
         
 
@@ -93,8 +95,8 @@ class SelectPathGrid(ctk.CTkFrame):
 class NameFileSelector(ctk.CTkFrame):
     def __init__(self,master,current_language = "English",*args, **kwargs):
         super().__init__(master,*args,*kwargs)
-
-        self.explanation_label = ctk.CTkLabel(self,text=language_change.getStringByID(3,current_language))
+        self.current_language = current_language
+        self.explanation_label = ctk.CTkLabel(self,text=language_change.getStringByID(3,self.current_language))
 
         self.main_grid = ctk.CTkFrame(self)
         
@@ -115,4 +117,16 @@ class NameFileSelector(ctk.CTkFrame):
         self.file_extension_selector.configure(width=newLen+10)
     def getEntryVal(self)-> str:
         return self.file_name_entry_var.get() + self.file_extension_selector.get()
-    
+
+class CustomMenu():
+    def __init__(self, master,update_func, *args, **kwargs) -> None:
+        self.menu = CTkMenuBar(master=master)
+        self.update_func = update_func
+        self.language_select = self.menu.add_cascade("Language")
+        self.drop_menu_language = CustomDropdownMenu(self.language_select)
+        self.drop_menu_language.add_option("English",lambda:self.updateLanguage("English"))
+        self.drop_menu_language.add_option("Dutch", lambda:self.updateLanguage("Dutch"))
+        self.drop_menu_language.add_option("Russian", lambda:self.updateLanguage("Russian"))
+    def updateLanguage(self,new_language):
+        global current_language
+        self.update_func(new_language)
