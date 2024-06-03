@@ -19,13 +19,7 @@ if __name__ == "__main__":
 
 
     app.mainloop()
-
-
-
-    #url = input("Typ uw CV view link:")
-    #technical_functions.createCVImageFromURL(url=url)
-    #print(f"file has been saved to output_image.png")
-    #print("Image saved as output_image.png")
+    
 
 
 

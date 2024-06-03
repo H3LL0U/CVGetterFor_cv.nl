@@ -6,6 +6,8 @@ from customtkinter import CTkFont
 import os
 from tkinter import filedialog
 import threading
+from PIL import Image
+from customtkinter import CTkImage
 class LinkEntry(ctk.CTkFrame):
     
     def __init__(self, master, current_language, *args, **kwargs):
@@ -16,16 +18,9 @@ class LinkEntry(ctk.CTkFrame):
         self.link_contents = ctk.StringVar()
         self.link_entry = ctk.CTkEntry(self,textvariable=self.link_contents, width=200,height=40, )
         
-        #self.save_path_variable = ctk.StringVar()
-        
-        
-        #self.save_path_variable.set(os.getcwd())
-        #self.path_label = ctk.CTkLabel(self,text= language_change.getStringByID(1,selected_language=current_language), font=custom_font)
-        #self.save_path = ctk.CTkEntry(self,textvariable=self.save_path_variable, width=200,height=40)
+
         self.select_path_to_save_to = SelectPathGrid(self,current_language=current_language)
-
         self.submit_button = ctk.CTkButton(self,text="Submit",command=self.submit)
-
         self.image_label = ctk.CTkLabel(self,image= None, text = "")
         
         self.entry_label.pack()
@@ -33,7 +28,7 @@ class LinkEntry(ctk.CTkFrame):
         self.select_path_to_save_to.pack()
         
         self.submit_button.pack(pady = 3)
-        self.image_label.pack()
+        self.image_label.pack(pady=5)
         self.pack()
         
     def submit_thread(self):
@@ -44,6 +39,12 @@ class LinkEntry(ctk.CTkFrame):
         if type(output) == str:
             messagebox.showerror("An error acured when trying to save your CV",output)
         else:
+            try:
+                open_image = Image.open(path+"\\CV.png")
+                created_image = CTkImage(open_image, size=tuple((i//4 for i in open_image.size)))
+                self.image_label.configure(image = created_image)
+            except Exception as e:
+                messagebox.showerror("An error acured",str(e))
             messagebox.showinfo("Success!",f"Your image has been saved to {path}")
     def submit(self):
         
