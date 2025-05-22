@@ -70,16 +70,22 @@ def getScreenshotsFromURL(url:str) -> list[list[PIL.PngImagePlugin.PngImageFile,
     chrome_options = Options()
     chrome_options.add_argument("--headless")
     chrome_options.add_argument("--disable-gpu")
-    chrome_options.add_argument("--window-size=3840x4000")
+    
     driver = webdriver.Chrome( options=chrome_options)
 
+    driver.set_window_size(3840, 4000)
     try:
         driver.get(url)
+        driver.add_cookie({
+        "name": "CookieConsent",
+        "value": "{stamp:'ECu1yvx/8AxLKY3UwA2LFyvjNpuHJ23dsVNAfKWaHdOI5A0D2iqLwQ==',necessary:true,preferences:false,statistics:false,marketing:false,method:'explicit',ver:1,utc:1747932302144,region:'nl'}"
+    })
     except KeyboardInterrupt:
         quit()
     except Exception as e:
         return (None,None,None)
-        
+    driver.refresh()
+    time.sleep(1)
     CV_ellements = driver.find_elements(By.TAG_NAME, 'canvas')
     
     ellement_locations = []
@@ -88,10 +94,11 @@ def getScreenshotsFromURL(url:str) -> list[list[PIL.PngImagePlugin.PngImageFile,
     for ellement in CV_ellements:
         ellement_locations.append(ellement.location)
         ellement_sizes.append( ellement.size)
-
+        print(ellement.size)
 
         screenshots.append(Image.open(io.BytesIO(driver.get_screenshot_as_png())))
-
+    
+    
     
     
     

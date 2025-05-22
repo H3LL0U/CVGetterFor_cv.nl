@@ -11,7 +11,6 @@ click==8.1.7
 colorama==0.4.6
 CTkMenuBar==0.8
 customtkinter==5.2.2
-cx_Freeze==6.16.0.dev63
 cx_Logging==3.1.0
 darkdetect==0.8.0
 Eel==0.16.0
